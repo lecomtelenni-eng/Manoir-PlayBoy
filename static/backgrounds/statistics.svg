@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080">
+<defs><linearGradient id="x" x2="1" y2="1"><stop stop-color="#070b11"/><stop offset=".6" stop-color="#21152b"/><stop offset="1" stop-color="#451638"/></linearGradient><linearGradient id="bar" x2="0" y2="1"><stop stop-color="#ff4fa3"/><stop offset="1" stop-color="#7c2fe0"/></linearGradient></defs>
+<rect width="1920" height="1080" fill="url(#x)"/>
+<rect x="210" y="160" width="1500" height="760" rx="42" fill="#121119" stroke="#4c3b4c" stroke-width="5"/>
+<g stroke="#32273a" stroke-width="2"><path d="M340 760H1590"/><path d="M340 620H1590"/><path d="M340 480H1590"/><path d="M340 340H1590"/></g>
+<g fill="url(#bar)"><rect x="410" y="590" width="110" height="170" rx="15"/><rect x="610" y="500" width="110" height="260" rx="15"/><rect x="810" y="410" width="110" height="350" rx="15"/><rect x="1010" y="540" width="110" height="220" rx="15"/><rect x="1210" y="300" width="110" height="460" rx="15"/><rect x="1410" y="380" width="110" height="380" rx="15"/></g>
+<polyline points="465,500 665,410 865,330 1065,440 1265,220 1465,275" fill="none" stroke="#d6b44a" stroke-width="12"/>
+<g fill="#d6b44a"><circle cx="465" cy="500" r="16"/><circle cx="665" cy="410" r="16"/><circle cx="865" cy="330" r="16"/><circle cx="1065" cy="440" r="16"/><circle cx="1265" cy="220" r="16"/><circle cx="1465" cy="275" r="16"/></g>
+</svg>

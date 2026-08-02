@@ -28,3 +28,17 @@ Mot de passe temporaire commun : `Manoir2026!`
 4. Sur Render, Manual sync.
 
 Les tables existantes sont conservées. La V3 ajoute automatiquement la table du planning.
+
+
+## V4 — Fonds premium
+Cette version conserve toutes les fonctions de la V3 et ajoute :
+- un fond différent pour le tableau de bord ;
+- un fond comptabilité/factures ;
+- un fond stocks ;
+- un fond événements ;
+- un fond personnel/planning ;
+- un fond statistiques ;
+- un fond connexion/comptes ;
+- des panneaux avec effet verre et un voile sombre pour la lisibilité.
+
+Les fonds sont intégrés directement dans `static/backgrounds` et ne dépendent d'aucun site externe.
