@@ -68,12 +68,12 @@
 
 <template id="line-template">
 <div class="invoice-line">
-<select name="product_id[]" class="product-select" required>
-<option value="">Choisir un produit…</option>
+<div class="product-picker"><img class="product-preview" src="{{ url_for('static', filename='product_icons/default.png') }}" alt=""><select name="product_id[]" class="product-select" required>
+<option value="" data-icon="{{ url_for('static', filename='product_icons/default.png') }}">Choisir un produit…</option>
 {% for p in products %}
-<option value="{{ p.id }}" data-purchase="{{ p.purchase_price }}" data-sale="{{ p.sale_price }}" data-stock="{{ p.quantity }}">{{ p.product }} — stock {{ p.quantity }}</option>
+<option value="{{ p.id }}" data-purchase="{{ p.purchase_price }}" data-sale="{{ p.sale_price }}" data-stock="{{ p.quantity }}" data-icon="{{ url_for('static', filename='product_icons/' ~ product_icon(p.product)) }}">{{ product_emoji(p.product) }} {{ p.product }} — stock {{ p.quantity }}</option>
 {% endfor %}
-</select>
+</select></div>
 <input type="number" name="quantity[]" class="qty-input" min="1" value="1" required>
 <div class="line-info"><span>Achat/unité</span><b class="purchase-unit">0.00 $</b></div>
 <div class="line-info"><span>Vente/unité</span><b class="sale-unit">0.00 $</b></div>
@@ -86,7 +86,7 @@ const lines = document.getElementById('invoice-lines');
 const template = document.getElementById('line-template');
 function money(v){return Number(v||0).toFixed(2)+' $'}
 function recalc(){let purchase=0,sale=0;document.querySelectorAll('.invoice-line').forEach(line=>{const o=line.querySelector('.product-select').selectedOptions[0];const q=Math.max(0,Number(line.querySelector('.qty-input').value||0));const pa=Number(o?.dataset.purchase||0), sv=Number(o?.dataset.sale||0);line.querySelector('.purchase-unit').textContent=money(pa);line.querySelector('.sale-unit').textContent=money(sv);line.querySelector('.line-total').textContent=money(sv*q);purchase+=pa*q;sale+=sv*q;});document.getElementById('purchase-total').textContent=money(purchase);document.getElementById('sale-total').textContent=money(sale);document.getElementById('profit-total').textContent=money(sale-purchase)}
-function addLine(){const node=template.content.cloneNode(true);lines.appendChild(node);const line=lines.lastElementChild;line.querySelector('.product-select').addEventListener('change',recalc);line.querySelector('.qty-input').addEventListener('input',recalc);line.querySelector('.remove-line').addEventListener('click',()=>{if(document.querySelectorAll('.invoice-line').length>1){line.remove();recalc()}});recalc()}
+function addLine(){const node=template.content.cloneNode(true);lines.appendChild(node);const line=lines.lastElementChild;line.querySelector('.product-select').addEventListener('change',()=>{const s=line.querySelector('.product-select');line.querySelector('.product-preview').src=s.selectedOptions[0]?.dataset.icon||'/static/product_icons/default.png';recalc()});line.querySelector('.qty-input').addEventListener('input',recalc);line.querySelector('.remove-line').addEventListener('click',()=>{if(document.querySelectorAll('.invoice-line').length>1){line.remove();recalc()}});recalc()}
 document.getElementById('add-line').addEventListener('click',addLine);addLine();
 </script>
 {% endblock %}

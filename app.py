@@ -67,6 +67,11 @@ class Stock(db.Model):
     sale_price = db.Column(db.Float, default=0, nullable=False)
     alert_level = db.Column(db.Integer, default=5, nullable=False)
 
+class AppSetting(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(120), unique=True, nullable=False)
+    value = db.Column(db.String(255), nullable=True)
+
 class Invoice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     invoice_number = db.Column(db.String(40), unique=True, nullable=False)
@@ -98,6 +103,18 @@ class Shift(db.Model):
     notes = db.Column(db.String(255))
 
 
+
+PRODUCT_CATALOG = [('Eau', '💧', 5, 20, 'eau.png'), ('Soda', '🥤', 10, 40, 'soda.png'), ('Bière', '🍺', 20, 80, 'biere.png'), ('Vodka', '🍸', 50, 220, 'vodka.png'), ('Whisky', '🥃', 60, 250, 'whisky.png'), ('Champagne', '🍾', 150, 700, 'champagne.png'), ('Vin rouge', '🍷', 45, 180, 'vin_rouge.png'), ('Tequila', '🥃', 55, 230, 'tequila.png'), ('Rhum', '🥃', 50, 210, 'rhum.png'), ('Cocktail', '🍹', 35, 160, 'cocktail.png'), ('Mojito', '🍹', 40, 180, 'mojito.png'), ('Cocktail sans alcool', '🍹', 20, 90, 'cocktail_sans_alcool.png'), ('Bouteille Premium', '💎', 500, 2000, 'premium.png'), ('Red Bull', '⚡', 15, 70, 'red_bull.png'), ('Jus de fruits', '🧃', 12, 50, 'jus.png'), ('Café', '☕', 8, 35, 'cafe.png'), ('Chips', '🍟', 12, 55, 'chips.png'), ('Burger', '🍔', 40, 140, 'burger.png'), ('Pizza', '🍕', 55, 180, 'pizza.png'), ('Hot-dog', '🌭', 30, 110, 'hot_dog.png'), ('Sushi', '🍣', 70, 240, 'sushi.png'), ('Cigare', '🚬', 80, 300, 'cigare.png')]
+PRODUCT_ICON_MAP = {name.lower(): filename for name, emoji, buy, sell, filename in PRODUCT_CATALOG}
+PRODUCT_EMOJI_MAP = {name.lower(): emoji for name, emoji, buy, sell, filename in PRODUCT_CATALOG}
+
+def product_icon(product_name):
+    return PRODUCT_ICON_MAP.get((product_name or '').strip().lower(), 'default.png')
+
+def product_emoji(product_name):
+    return PRODUCT_EMOJI_MAP.get((product_name or '').strip().lower(), '🛍️')
+
+
 def seed():
     db.create_all()
     if User.query.count() == 0:
@@ -107,16 +124,20 @@ def seed():
             User(username='MARCUS', password_hash=pwd, role='Direction'),
             User(username='KEAVON', password_hash=pwd, role='Direction'),
         ])
-    if Stock.query.count() == 0:
-        db.session.add_all([
-            Stock(product='Eau', quantity=120, purchase_price=5, sale_price=20, alert_level=20),
-            Stock(product='Soda', quantity=90, purchase_price=10, sale_price=40, alert_level=15),
-            Stock(product='Bière', quantity=80, purchase_price=20, sale_price=80, alert_level=15),
-            Stock(product='Vodka', quantity=25, purchase_price=50, sale_price=220, alert_level=5),
-            Stock(product='Whisky', quantity=20, purchase_price=60, sale_price=250, alert_level=5),
-            Stock(product='Champagne', quantity=18, purchase_price=150, sale_price=700, alert_level=5),
-            Stock(product='Bouteille Premium', quantity=8, purchase_price=500, sale_price=2000, alert_level=3),
-        ])
+    catalog_marker = AppSetting.query.filter_by(key='product_catalog_v52').first()
+    if catalog_marker is None:
+        for product_name, emoji, purchase_price, sale_price, icon_file in PRODUCT_CATALOG:
+            row = Stock.query.filter(db.func.lower(Stock.product) == product_name.lower()).first()
+            if row is None:
+                row = Stock(product=product_name, quantity=100, purchase_price=purchase_price,
+                            sale_price=sale_price, alert_level=10)
+                db.session.add(row)
+            else:
+                row.quantity = 100
+                row.purchase_price = purchase_price
+                row.sale_price = sale_price
+                row.alert_level = 10
+        db.session.add(AppSetting(key='product_catalog_v52', value='installed'))
     db.session.commit()
 
 
@@ -149,7 +170,11 @@ def direction_required(view):
 
 @app.context_processor
 def inject_access():
-    return {'access': ROLE_ACCESS.get(session.get('role'), {'dashboard'})}
+    return {
+        'access': ROLE_ACCESS.get(session.get('role'), {'dashboard'}),
+        'product_icon': product_icon,
+        'product_emoji': product_emoji,
+    }
 
 @app.route('/login', methods=['GET','POST'])
 def login():

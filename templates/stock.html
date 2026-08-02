@@ -17,7 +17,7 @@
 <tr><th>Produit</th><th>Quantité</th><th>Achat</th><th>Vente</th><th>Marge</th><th>Mise à jour</th><th></th></tr>
 {% for r in rows %}
 <tr class="{% if r.quantity <= r.alert_level %}low{% endif %}">
-<td>{{ r.product }}</td><td>{{ r.quantity }}</td><td>{{ "%.0f"|format(r.purchase_price) }} $</td><td>{{ "%.0f"|format(r.sale_price) }} $</td><td>{{ "%.0f"|format(r.margin) }} $</td>
+<td><div class="product-cell"><img src="{{ url_for('static', filename='product_icons/' ~ product_icon(r.product)) }}" alt=""><span>{{ product_emoji(r.product) }} {{ r.product }}</span></div></td><td>{{ r.quantity }}</td><td>{{ "%.0f"|format(r.purchase_price) }} $</td><td>{{ "%.0f"|format(r.sale_price) }} $</td><td>{{ "%.0f"|format(r.margin) }} $</td>
 <td><form method="post" action="{{ url_for('update_stock', item_id=r.id) }}" class="inline"><input type="number" name="quantity" value="{{ r.quantity }}"><button>OK</button></form></td>
 <td><form method="post" action="{{ url_for('delete_stock', item_id=r.id) }}"><button class="danger-btn">Supprimer</button></form></td>
 </tr>

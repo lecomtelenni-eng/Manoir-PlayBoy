@@ -52,7 +52,11 @@ Les fonds sont intégrés directement dans `static/backgrounds` et ne dépendent
 - Logo NF exact en bas à droite
 - Toutes les fonctions de la V4.1 conservées
 
-
-## V5.1 — Correction définitive des fonds
-Les fonds sont désormais injectés directement par Flask dans la balise `<body>`.
-Un paramètre anti-cache `v=5.1` oblige Render et le navigateur à charger les nouvelles images.
+## V5.2 — Icônes produits et catalogue
+- Icônes devant les produits dans le stock
+- Aperçu de l'icône dans la facture multi-produits
+- Icônes sur les factures RP
+- Catalogue ajouté automatiquement avec 100 unités par produit
+- Cocktails, mojitos et cocktails sans alcool inclus
+- Les nouveaux produits inconnus utilisent une icône générique
+- Le remplissage à 100 est effectué une seule fois grâce au marqueur `product_catalog_v52`

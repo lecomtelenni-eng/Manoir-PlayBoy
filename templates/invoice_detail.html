@@ -5,7 +5,7 @@
 <div class="invoice-head"><div><div class="invoice-crown">♛</div><h1>PLAYBOY MANOR</h1><p>Facture RP</p></div><div class="invoice-number"><span>N°</span><strong>{{ invoice.invoice_number }}</strong><span>Date : {{ invoice.date }}</span></div></div>
 <div class="invoice-customer"><div><span>Client</span><strong>{{ invoice.customer }}</strong></div><div><span>Responsable</span><strong>{{ invoice.responsible }}</strong></div></div>
 <table class="invoice-table"><tr><th>Produit</th><th>Quantité</th><th>Prix unitaire</th><th>Total</th></tr>
-{% for item in invoice.items %}<tr><td>{{ item.product_name }}</td><td>{{ item.quantity }}</td><td>{{ "%.2f"|format(item.unit_sale_price) }} $</td><td>{{ "%.2f"|format(item.unit_sale_price*item.quantity) }} $</td></tr>{% endfor %}
+{% for item in invoice.items %}<tr><td><div class="product-cell invoice-product"><img src="{{ url_for('static', filename='product_icons/' ~ product_icon(item.product_name)) }}" alt=""><span>{{ product_emoji(item.product_name) }} {{ item.product_name }}</span></div></td><td>{{ item.quantity }}</td><td>{{ "%.2f"|format(item.unit_sale_price) }} $</td><td>{{ "%.2f"|format(item.unit_sale_price*item.quantity) }} $</td></tr>{% endfor %}
 </table>
 <div class="invoice-summary"><div><span>Coût d'achat</span><b>{{ "%.2f"|format(invoice.total_purchase) }} $</b></div><div><span>Bénéfice</span><b>{{ "%.2f"|format(invoice.total_sale-invoice.total_purchase) }} $</b></div><div class="invoice-due"><span>TOTAL</span><strong>{{ "%.2f"|format(invoice.total_sale) }} $</strong></div></div>
 <p class="invoice-thanks">Merci pour votre visite au Playboy Manor.</p>
