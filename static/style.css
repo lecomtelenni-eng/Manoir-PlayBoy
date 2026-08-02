@@ -38,14 +38,14 @@ body::before{
     radial-gradient(circle at 85% 5%,rgba(255,79,163,.15),transparent 40%);
   pointer-events:none;
 }
-.page-dashboard{background-image:url("backgrounds/dashboard.svg")}
-.page-transactions,.page-create_invoice,.page-invoice_detail{background-image:url("backgrounds/accounting.svg")}
-.page-stock,.page-update_stock,.page-delete_stock{background-image:url("backgrounds/stock.svg")}
-.page-events,.page-delete_event{background-image:url("backgrounds/events.svg")}
-.page-staff,.page-planning,.page-delete_staff,.page-delete_shift{background-image:url("backgrounds/staff.svg")}
-.page-statistics,.page-export_transactions,.page-export_invoices,.page-export_stock{background-image:url("backgrounds/statistics.svg")}
-.page-login{background-image:url("backgrounds/login.svg")}
-.page-users,.page-change_password{background-image:url("backgrounds/login.svg")}
+.page-dashboard{background-image:url("/static/backgrounds/dashboard.svg")}
+.page-transactions,.page-create_invoice,.page-invoice_detail{background-image:url("/static/backgrounds/accounting.svg")}
+.page-stock,.page-update_stock,.page-delete_stock{background-image:url("/static/backgrounds/stock.svg")}
+.page-events,.page-delete_event{background-image:url("/static/backgrounds/events.svg")}
+.page-staff,.page-planning,.page-delete_staff,.page-delete_shift{background-image:url("/static/backgrounds/staff.svg")}
+.page-statistics,.page-export_transactions,.page-export_invoices,.page-export_stock{background-image:url("/static/backgrounds/statistics.svg")}
+.page-login{background-image:url("/static/backgrounds/login.svg")}
+.page-users,.page-change_password{background-image:url("/static/backgrounds/login.svg")}
 
 .sidebar{
   background:rgba(9,9,13,.86);
@@ -110,4 +110,41 @@ th{
 @media(max-width:900px){
   body{background-attachment:scroll}
   .sidebar{backdrop-filter:blur(14px)}
+}
+
+
+/* V4.1 — chemins Render corrigés + logo NF exact */
+body{
+  background-position:center center !important;
+  background-size:cover !important;
+  background-repeat:no-repeat !important;
+  background-attachment:fixed !important;
+}
+body::before{
+  background:
+    linear-gradient(110deg,rgba(4,5,8,.76),rgba(8,7,12,.62),rgba(25,8,22,.60)),
+    radial-gradient(circle at 85% 5%,rgba(255,79,163,.12),transparent 42%) !important;
+}
+.nf-floating-logo{
+  position:fixed;
+  right:18px;
+  bottom:16px;
+  width:74px;
+  height:74px;
+  object-fit:contain;
+  object-position:center;
+  border-radius:12px;
+  opacity:.62;
+  z-index:9999;
+  box-shadow:0 0 24px rgba(222,92,255,.30);
+  transition:opacity .25s ease,transform .25s ease,box-shadow .25s ease;
+}
+.nf-floating-logo:hover{
+  opacity:1;
+  transform:scale(1.06);
+  box-shadow:0 0 34px rgba(222,92,255,.65);
+}
+@media(max-width:720px){
+  body{background-attachment:scroll !important}
+  .nf-floating-logo{width:56px;height:56px;right:10px;bottom:10px}
 }
