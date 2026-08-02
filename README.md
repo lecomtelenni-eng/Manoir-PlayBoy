@@ -42,3 +42,12 @@ Cette version conserve toutes les fonctions de la V3 et ajoute :
 - des panneaux avec effet verre et un voile sombre pour la lisibilité.
 
 Les fonds sont intégrés directement dans `static/backgrounds` et ne dépendent d'aucun site externe.
+
+
+## V5 — Design néon rose/violet
+- Fonds réalistes intégrés directement au projet
+- Interface inspirée de la maquette validée
+- Boutons et accents rose/violet
+- Panneaux noirs effet verre
+- Logo NF exact en bas à droite
+- Toutes les fonctions de la V4.1 conservées
