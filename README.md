@@ -51,3 +51,8 @@ Les fonds sont intégrés directement dans `static/backgrounds` et ne dépendent
 - Panneaux noirs effet verre
 - Logo NF exact en bas à droite
 - Toutes les fonctions de la V4.1 conservées
+
+
+## V5.1 — Correction définitive des fonds
+Les fonds sont désormais injectés directement par Flask dans la balise `<body>`.
+Un paramètre anti-cache `v=5.1` oblige Render et le navigateur à charger les nouvelles images.

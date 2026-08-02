@@ -171,3 +171,27 @@ canvas{max-height:340px}
   .sidebar,.invoice-actions,.flash,.nf-floating-logo{display:none!important}
   .content{margin:0!important;padding:0!important;width:100%!important}.invoice-paper{max-width:none;border-radius:0}.layout{display:block}
 }
+
+
+/* ===== V5.1 — FONDS FORCÉS PAR FLASK ===== */
+body{
+  background-color:#07070a !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
+  background-attachment:fixed !important;
+}
+body::before{
+  background:
+    linear-gradient(100deg,rgba(3,3,7,.78) 0%,rgba(7,5,11,.57) 48%,rgba(18,5,20,.54) 100%),
+    radial-gradient(circle at 80% 10%,rgba(221,48,255,.10),transparent 38%) !important;
+}
+.content{
+  background:transparent !important;
+}
+.layout{
+  background:transparent !important;
+}
+@media(max-width:900px){
+  body{background-attachment:scroll !important}
+}
