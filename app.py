@@ -57,6 +57,28 @@ class Stock(db.Model):
     alert_level = db.Column(db.Integer, default=5, nullable=False)
 
 
+class Invoice(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    invoice_number = db.Column(db.String(40), unique=True, nullable=False)
+    date = db.Column(db.Date, nullable=False, default=date.today)
+    customer = db.Column(db.String(120), nullable=False, default='Client RP')
+    responsible = db.Column(db.String(80))
+    total_sale = db.Column(db.Float, nullable=False, default=0)
+    total_purchase = db.Column(db.Float, nullable=False, default=0)
+    transaction_id = db.Column(db.Integer, db.ForeignKey('transaction.id'), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    items = db.relationship('InvoiceItem', backref='invoice', cascade='all, delete-orphan', lazy=True)
+
+class InvoiceItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'), nullable=False)
+    stock_id = db.Column(db.Integer, nullable=True)
+    product_name = db.Column(db.String(140), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    unit_purchase_price = db.Column(db.Float, nullable=False, default=0)
+    unit_sale_price = db.Column(db.Float, nullable=False, default=0)
+
+
 def seed():
     db.create_all()
     if User.query.count() == 0:
@@ -141,12 +163,98 @@ def transactions():
         db.session.commit()
         flash('Opération sauvegardée.', 'success')
         return redirect(url_for('transactions'))
-    return render_template('transactions.html', rows=Transaction.query.order_by(Transaction.date.desc(), Transaction.id.desc()).all())
+    products = Stock.query.order_by(Stock.product).all()
+    invoices = Invoice.query.order_by(Invoice.created_at.desc()).limit(50).all()
+    return render_template('transactions.html',
+        rows=Transaction.query.order_by(Transaction.date.desc(), Transaction.id.desc()).all(),
+        products=products, invoices=invoices, today=date.today().isoformat())
 
 @app.post('/transactions/delete/<int:item_id>')
 @login_required
 def delete_transaction(item_id):
     db.session.delete(Transaction.query.get_or_404(item_id)); db.session.commit()
+    return redirect(url_for('transactions'))
+
+
+@app.post('/invoices/create')
+@login_required
+def create_invoice():
+    product_ids = request.form.getlist('product_id[]')
+    quantities = request.form.getlist('quantity[]')
+    customer = request.form.get('customer', '').strip() or 'Client RP'
+    responsible = request.form.get('responsible', '').strip() or session.get('username', '')
+    invoice_date = datetime.strptime(request.form.get('invoice_date'), '%Y-%m-%d').date()
+
+    if not product_ids or len(product_ids) != len(quantities):
+        flash('Ajoute au moins un produit à la facture.', 'danger')
+        return redirect(url_for('transactions'))
+
+    prepared = []
+    total_sale = 0.0
+    total_purchase = 0.0
+    try:
+        for pid, qty_raw in zip(product_ids, quantities):
+            qty = int(qty_raw)
+            if qty <= 0:
+                raise ValueError('Quantité invalide')
+            product = Stock.query.get(int(pid))
+            if product is None:
+                raise ValueError('Produit introuvable')
+            if product.quantity < qty:
+                raise ValueError(f'Stock insuffisant pour {product.product} : {product.quantity} disponible(s).')
+            prepared.append((product, qty))
+            total_sale += product.sale_price * qty
+            total_purchase += product.purchase_price * qty
+
+        invoice_number = f'PB-{datetime.now().strftime("%Y%m%d-%H%M%S-%f")[:22]}'
+        description = 'Facture ' + invoice_number + ' — ' + ', '.join(f'{qty}× {p.product}' for p, qty in prepared)
+        tx = Transaction(date=invoice_date, type='recette', category='Vente produits',
+                         description=description, amount=total_sale, responsible=responsible)
+        db.session.add(tx)
+        db.session.flush()
+
+        invoice = Invoice(invoice_number=invoice_number, date=invoice_date, customer=customer,
+                          responsible=responsible, total_sale=total_sale,
+                          total_purchase=total_purchase, transaction_id=tx.id)
+        db.session.add(invoice)
+        db.session.flush()
+
+        for product, qty in prepared:
+            product.quantity -= qty
+            db.session.add(InvoiceItem(invoice_id=invoice.id, stock_id=product.id,
+                product_name=product.product, quantity=qty,
+                unit_purchase_price=product.purchase_price, unit_sale_price=product.sale_price))
+
+        db.session.commit()
+        flash(f'Facture {invoice_number} créée : {total_sale:.2f} $. Le stock a été mis à jour.', 'success')
+        return redirect(url_for('invoice_detail', invoice_id=invoice.id))
+    except Exception as exc:
+        db.session.rollback()
+        flash(str(exc), 'danger')
+        return redirect(url_for('transactions'))
+
+@app.get('/invoices/<int:invoice_id>')
+@login_required
+def invoice_detail(invoice_id):
+    invoice = Invoice.query.get_or_404(invoice_id)
+    return render_template('invoice_detail.html', invoice=invoice)
+
+@app.post('/invoices/delete/<int:invoice_id>')
+@direction_required
+def delete_invoice(invoice_id):
+    invoice = Invoice.query.get_or_404(invoice_id)
+    for item in invoice.items:
+        if item.stock_id:
+            product = Stock.query.get(item.stock_id)
+            if product:
+                product.quantity += item.quantity
+    if invoice.transaction_id:
+        tx = Transaction.query.get(invoice.transaction_id)
+        if tx:
+            db.session.delete(tx)
+    db.session.delete(invoice)
+    db.session.commit()
+    flash('Facture supprimée et quantités remises dans le stock.', 'success')
     return redirect(url_for('transactions'))
 
 @app.route('/events', methods=['GET','POST'])
