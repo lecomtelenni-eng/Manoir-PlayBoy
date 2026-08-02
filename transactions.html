@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Mot de passe{% endblock %}
+{% block content %}
+<h1>Modifier le mot de passe</h1>
+<section class="panel small">
+<form method="post" class="form">
+<label>Mot de passe actuel</label><input type="password" name="current_password" required>
+<label>Nouveau mot de passe</label><input type="password" name="new_password" required>
+<label>Confirmer le nouveau mot de passe</label><input type="password" name="confirm_password" required>
+<button>Modifier</button>
+</form>
+</section>
+{% endblock %}

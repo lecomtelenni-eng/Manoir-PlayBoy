@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block content %}
+<div class="login-card">
+  <div class="crown">♛</div>
+  <h1>PLAYBOY MANOR</h1>
+  <p>Gestion privée du Manoir</p>
+  <form method="post" class="form">
+    <label>Identifiant</label>
+    <input name="username" required placeholder="Direction">
+    <label>Mot de passe</label>
+    <input type="password" name="password" required placeholder="••••••••">
+    <button>Se connecter</button>
+  </form>
+</div>
+{% endblock %}
