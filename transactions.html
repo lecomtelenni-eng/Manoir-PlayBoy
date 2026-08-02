@@ -1,13 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Mot de passe{% endblock %}
+{% block title %}Stocks{% endblock %}
 {% block content %}
-<h1>Modifier le mot de passe</h1>
-<section class="panel small">
-<form method="post" class="form">
-<label>Mot de passe actuel</label><input type="password" name="current_password" required>
-<label>Nouveau mot de passe</label><input type="password" name="new_password" required>
-<label>Confirmer le nouveau mot de passe</label><input type="password" name="confirm_password" required>
-<button>Modifier</button>
+<h1>Stocks & tarifs</h1>
+<section class="panel">
+<form method="post" class="form-grid">
+<input name="product" placeholder="Produit" required>
+<input type="number" name="quantity" placeholder="Quantité" required>
+<input type="number" step="0.01" name="purchase_price" placeholder="Prix d'achat" required>
+<input type="number" step="0.01" name="sale_price" placeholder="Prix de vente" required>
+<input type="number" name="alert_level" placeholder="Seuil d'alerte" required>
+<button>Ajouter</button>
 </form>
+</section>
+<section class="panel">
+<table>
+<tr><th>Produit</th><th>Quantité</th><th>Achat</th><th>Vente</th><th>Marge</th><th>Mise à jour</th><th></th></tr>
+{% for r in rows %}
+<tr class="{% if r.quantity <= r.alert_level %}low{% endif %}">
+<td>{{ r.product }}</td><td>{{ r.quantity }}</td><td>{{ "%.0f"|format(r.purchase_price) }} $</td><td>{{ "%.0f"|format(r.sale_price) }} $</td><td>{{ "%.0f"|format(r.margin) }} $</td>
+<td><form method="post" action="{{ url_for('update_stock', item_id=r.id) }}" class="inline"><input type="number" name="quantity" value="{{ r.quantity }}"><button>OK</button></form></td>
+<td><form method="post" action="{{ url_for('delete_stock', item_id=r.id) }}"><button class="danger-btn">Supprimer</button></form></td>
+</tr>
+{% endfor %}
+</table>
 </section>
 {% endblock %}

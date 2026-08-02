@@ -1,39 +1,41 @@
-{% extends "base.html" %}
-{% block title %}Tableau de bord{% endblock %}
-{% block content %}
-<h1>Tableau de bord</h1>
-<div class="cards">
-  <div class="card"><span>Recettes</span><strong>{{ "%.0f"|format(recettes) }} $</strong></div>
-  <div class="card"><span>Dépenses</span><strong>{{ "%.0f"|format(depenses) }} $</strong></div>
-  <div class="card"><span>Bénéfice net</span><strong>{{ "%.0f"|format(benefice) }} $</strong></div>
-</div>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Playboy Manor{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% if session.get('user_id') %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">♛ PLAYBOY<br><span>MANOR</span></div>
+    <nav>
+      <a href="{{ url_for('dashboard') }}">🏠 Tableau de bord</a>
+      <a href="{{ url_for('transactions') }}">💰 Comptabilité</a>
+      <a href="{{ url_for('events') }}">🎉 Événements</a>
+      <a href="{{ url_for('stock') }}">🍾 Stocks</a>
+      <a href="{{ url_for('staff') }}">👥 Personnel</a>
+      <a href="{{ url_for('change_password') }}">🔐 Mot de passe</a>
+      <a href="{{ url_for('logout') }}">🚪 Déconnexion</a>
+    </nav>
+    <div class="user">{{ session.get('username') }}<br><small>{{ session.get('role') }}</small></div>
+  </aside>
+  <main class="content">
+{% else %}
+<main class="login-wrap">
+{% endif %}
 
-<div class="grid2">
-<section class="panel">
-<h2>Dernières opérations</h2>
-<table>
-<tr><th>Date</th><th>Description</th><th>Montant</th></tr>
-{% for r in recent %}
-<tr><td>{{ r.date }}</td><td>{{ r.description }}</td><td class="{{ r.type }}">{{ "%.0f"|format(r.amount) }} $</td></tr>
-{% endfor %}
-</table>
-</section>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <div class="flash {{ category }}">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
 
-<section class="panel">
-<h2>Événements à venir</h2>
-<table>
-<tr><th>Date</th><th>Événement</th><th>Entrée</th></tr>
-{% for e in upcoming %}
-<tr><td>{{ e.event_date }}</td><td>{{ e.name }}</td><td>{{ "%.0f"|format(e.entry_price) }} $</td></tr>
-{% endfor %}
-</table>
-</section>
-</div>
+{% block content %}{% endblock %}
 
-<section class="panel">
-<h2>Alertes de stock</h2>
-{% if low_stock %}
-{% for s in low_stock %}<div class="alert">⚠️ {{ s.product }} : {{ s.quantity }} restant(s)</div>{% endfor %}
-{% else %}<p>Aucune alerte de stock.</p>{% endif %}
-</section>
-{% endblock %}
+</main>
+{% if session.get('user_id') %}</div>{% endif %}
+</body>
+</html>

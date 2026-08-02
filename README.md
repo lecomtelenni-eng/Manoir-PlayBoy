@@ -1,44 +1,328 @@
-# Playboy Manor Manager
+import os
+import sqlite3
+from datetime import datetime
+from functools import wraps
 
-Petit site local de gestion pour le Manoir Playboy.
+from flask import Flask, render_template, request, redirect, url_for, session, flash, g
+from werkzeug.security import generate_password_hash, check_password_hash
 
-## Connexion par défaut
-- Identifiant : `Direction`
-- Mot de passe : `Manoir2026!`
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "manoir.db")
 
-Change le mot de passe dès la première connexion.
+app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key-before-public-hosting")
 
-## Installation sous Windows
+def get_db():
+    if "db" not in g:
+        g.db = sqlite3.connect(DB_PATH)
+        g.db.row_factory = sqlite3.Row
+    return g.db
 
-1. Installe Python 3.11 ou plus récent.
-2. Ouvre le dossier du site.
-3. Double-clique sur `LANCER_LE_SITE.bat`.
-4. Ouvre ton navigateur sur : http://127.0.0.1:5000
+@app.teardown_appcontext
+def close_db(exception=None):
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
 
-Au premier lancement, le site crée automatiquement la base de données `manoir.db`.
+def init_db():
+    db = sqlite3.connect(DB_PATH)
+    cur = db.cursor()
 
-## Fonctions incluses
-- Connexion par mot de passe
-- Tableau de bord
-- Recettes et dépenses
-- Événements avec bénéfice estimé
-- Personnel et salaires
-- Stocks, prix d'achat, prix de vente et marge
-- Alertes de stock
-- Changement de mot de passe
-- Données d'exemple déjà intégrées
+    cur.executescript("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'Direction'
+    );
 
-## Mise en ligne
-Pour un hébergement public, change obligatoirement la clé secrète Flask et utilise un hébergeur adapté.
+    CREATE TABLE IF NOT EXISTS transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,
+        type TEXT NOT NULL CHECK(type IN ('recette','depense')),
+        category TEXT NOT NULL,
+        description TEXT NOT NULL,
+        amount REAL NOT NULL,
+        responsible TEXT
+    );
 
+    CREATE TABLE IF NOT EXISTS events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        event_date TEXT NOT NULL,
+        entry_price REAL NOT NULL DEFAULT 0,
+        participants INTEGER NOT NULL DEFAULT 0,
+        expenses REAL NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'Prévu'
+    );
 
-## En cas de page "Ce site est inaccessible"
-Le serveur doit rester lancé sur l'ordinateur.
+    CREATE TABLE IF NOT EXISTS staff (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        role TEXT NOT NULL,
+        salary REAL NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'Actif'
+    );
 
-1. Décompresse entièrement le fichier ZIP.
-2. Ne lance pas le fichier directement depuis le ZIP.
-3. Double-clique sur `LANCER_LE_SITE.bat`.
-4. Attends le message `Site prêt`.
-5. Le navigateur s'ouvrira automatiquement.
+    CREATE TABLE IF NOT EXISTS stock (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product TEXT NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 0,
+        purchase_price REAL NOT NULL DEFAULT 0,
+        sale_price REAL NOT NULL DEFAULT 0,
+        alert_level INTEGER NOT NULL DEFAULT 5
+    );
+    """)
 
-Si le lancement échoue, ouvre `serveur.log` et lis le message d'erreur.
+    cur.execute("SELECT COUNT(*) FROM users")
+    if cur.fetchone()[0] == 0:
+        cur.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+            ("Direction", generate_password_hash("Manoir2026!"), "Propriétaire")
+        )
+
+    cur.execute("SELECT COUNT(*) FROM transactions")
+    if cur.fetchone()[0] == 0:
+        sample_tx = [
+            ("2026-08-02","recette","Entrées","White Party - 50 entrées",7500,"Direction"),
+            ("2026-08-02","recette","Bar","Ventes de champagne et cocktails",4200,"Barman"),
+            ("2026-08-02","depense","DJ","Cachet du DJ",1500,"Direction"),
+            ("2026-08-02","depense","Sécurité","Équipe de sécurité",1200,"Direction"),
+        ]
+        cur.executemany("INSERT INTO transactions(date,type,category,description,amount,responsible) VALUES(?,?,?,?,?,?)", sample_tx)
+
+    cur.execute("SELECT COUNT(*) FROM events")
+    if cur.fetchone()[0] == 0:
+        cur.executemany(
+            "INSERT INTO events(name,event_date,entry_price,participants,expenses,status) VALUES(?,?,?,?,?,?)",
+            [
+                ("Squid Game — Playboy Manor Edition","2026-08-15",150,50,4500,"Prévu"),
+                ("White Party","2026-08-22",300,0,2500,"Prévu"),
+                ("Casino Royale","2026-08-29",500,0,4000,"Prévu"),
+            ]
+        )
+
+    cur.execute("SELECT COUNT(*) FROM staff")
+    if cur.fetchone()[0] == 0:
+        cur.executemany(
+            "INSERT INTO staff(name,role,salary,status) VALUES(?,?,?,?)",
+            [
+                ("Lenni","Propriétaire",0,"Actif"),
+                ("Marcus","Sécurité",800,"Actif"),
+                ("Heaven","Bunny",600,"Actif"),
+                ("Jay","DJ",1200,"Actif"),
+            ]
+        )
+
+    cur.execute("SELECT COUNT(*) FROM stock")
+    if cur.fetchone()[0] == 0:
+        cur.executemany(
+            "INSERT INTO stock(product,quantity,purchase_price,sale_price,alert_level) VALUES(?,?,?,?,?)",
+            [
+                ("Eau",120,5,20,20),
+                ("Soda",90,10,40,15),
+                ("Bière",80,20,80,15),
+                ("Vodka",25,50,220,5),
+                ("Whisky",20,60,250,5),
+                ("Champagne",18,150,700,5),
+                ("Bouteille Premium",8,500,2000,3),
+            ]
+        )
+
+    db.commit()
+    db.close()
+
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapped
+
+@app.route("/", methods=["GET"])
+@login_required
+def dashboard():
+    db = get_db()
+    totals = db.execute("""
+        SELECT
+        COALESCE(SUM(CASE WHEN type='recette' THEN amount ELSE 0 END),0) AS recettes,
+        COALESCE(SUM(CASE WHEN type='depense' THEN amount ELSE 0 END),0) AS depenses
+        FROM transactions
+    """).fetchone()
+    recent = db.execute("SELECT * FROM transactions ORDER BY date DESC, id DESC LIMIT 8").fetchall()
+    upcoming = db.execute("SELECT * FROM events ORDER BY event_date ASC LIMIT 5").fetchall()
+    low_stock = db.execute("SELECT * FROM stock WHERE quantity <= alert_level ORDER BY quantity ASC").fetchall()
+    return render_template("dashboard.html",
+                           recettes=totals["recettes"],
+                           depenses=totals["depenses"],
+                           benefice=totals["recettes"]-totals["depenses"],
+                           recent=recent, upcoming=upcoming, low_stock=low_stock)
+
+@app.route("/login", methods=["GET","POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"].strip()
+        password = request.form["password"]
+        user = get_db().execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+        if user and check_password_hash(user["password_hash"], password):
+            session.clear()
+            session["user_id"] = user["id"]
+            session["username"] = user["username"]
+            session["role"] = user["role"]
+            return redirect(url_for("dashboard"))
+        flash("Identifiant ou mot de passe incorrect.", "danger")
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+@app.route("/transactions", methods=["GET","POST"])
+@login_required
+def transactions():
+    db = get_db()
+    if request.method == "POST":
+        db.execute("""
+            INSERT INTO transactions(date,type,category,description,amount,responsible)
+            VALUES(?,?,?,?,?,?)
+        """, (
+            request.form["date"],
+            request.form["type"],
+            request.form["category"],
+            request.form["description"],
+            float(request.form["amount"]),
+            request.form.get("responsible","")
+        ))
+        db.commit()
+        flash("Opération ajoutée.", "success")
+        return redirect(url_for("transactions"))
+    rows = db.execute("SELECT * FROM transactions ORDER BY date DESC, id DESC").fetchall()
+    return render_template("transactions.html", rows=rows)
+
+@app.post("/transactions/delete/<int:item_id>")
+@login_required
+def delete_transaction(item_id):
+    db = get_db()
+    db.execute("DELETE FROM transactions WHERE id=?", (item_id,))
+    db.commit()
+    flash("Opération supprimée.", "success")
+    return redirect(url_for("transactions"))
+
+@app.route("/events", methods=["GET","POST"])
+@login_required
+def events():
+    db = get_db()
+    if request.method == "POST":
+        db.execute("""
+            INSERT INTO events(name,event_date,entry_price,participants,expenses,status)
+            VALUES(?,?,?,?,?,?)
+        """, (
+            request.form["name"], request.form["event_date"],
+            float(request.form["entry_price"]), int(request.form["participants"]),
+            float(request.form["expenses"]), request.form["status"]
+        ))
+        db.commit()
+        flash("Événement ajouté.", "success")
+        return redirect(url_for("events"))
+    rows = db.execute("SELECT *, (entry_price*participants-expenses) AS estimated_profit FROM events ORDER BY event_date DESC").fetchall()
+    return render_template("events.html", rows=rows)
+
+@app.post("/events/delete/<int:item_id>")
+@login_required
+def delete_event(item_id):
+    db = get_db()
+    db.execute("DELETE FROM events WHERE id=?", (item_id,))
+    db.commit()
+    return redirect(url_for("events"))
+
+@app.route("/staff", methods=["GET","POST"])
+@login_required
+def staff():
+    db = get_db()
+    if request.method == "POST":
+        db.execute("INSERT INTO staff(name,role,salary,status) VALUES(?,?,?,?)", (
+            request.form["name"], request.form["role"],
+            float(request.form["salary"]), request.form["status"]
+        ))
+        db.commit()
+        flash("Employé ajouté.", "success")
+        return redirect(url_for("staff"))
+    rows = db.execute("SELECT * FROM staff ORDER BY role, name").fetchall()
+    return render_template("staff.html", rows=rows)
+
+@app.post("/staff/delete/<int:item_id>")
+@login_required
+def delete_staff(item_id):
+    db = get_db()
+    db.execute("DELETE FROM staff WHERE id=?", (item_id,))
+    db.commit()
+    return redirect(url_for("staff"))
+
+@app.route("/stock", methods=["GET","POST"])
+@login_required
+def stock():
+    db = get_db()
+    if request.method == "POST":
+        db.execute("""
+            INSERT INTO stock(product,quantity,purchase_price,sale_price,alert_level)
+            VALUES(?,?,?,?,?)
+        """, (
+            request.form["product"], int(request.form["quantity"]),
+            float(request.form["purchase_price"]), float(request.form["sale_price"]),
+            int(request.form["alert_level"])
+        ))
+        db.commit()
+        flash("Produit ajouté.", "success")
+        return redirect(url_for("stock"))
+    rows = db.execute("""
+        SELECT *, (sale_price-purchase_price) AS margin
+        FROM stock ORDER BY product
+    """).fetchall()
+    return render_template("stock.html", rows=rows)
+
+@app.post("/stock/update/<int:item_id>")
+@login_required
+def update_stock(item_id):
+    qty = int(request.form["quantity"])
+    db = get_db()
+    db.execute("UPDATE stock SET quantity=? WHERE id=?", (qty, item_id))
+    db.commit()
+    flash("Stock mis à jour.", "success")
+    return redirect(url_for("stock"))
+
+@app.post("/stock/delete/<int:item_id>")
+@login_required
+def delete_stock(item_id):
+    db = get_db()
+    db.execute("DELETE FROM stock WHERE id=?", (item_id,))
+    db.commit()
+    return redirect(url_for("stock"))
+
+@app.route("/change-password", methods=["GET","POST"])
+@login_required
+def change_password():
+    if request.method == "POST":
+        current = request.form["current_password"]
+        new = request.form["new_password"]
+        confirm = request.form["confirm_password"]
+        db = get_db()
+        user = db.execute("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
+        if not check_password_hash(user["password_hash"], current):
+            flash("Mot de passe actuel incorrect.", "danger")
+        elif len(new) < 8:
+            flash("Le nouveau mot de passe doit contenir au moins 8 caractères.", "danger")
+        elif new != confirm:
+            flash("Les deux nouveaux mots de passe ne correspondent pas.", "danger")
+        else:
+            db.execute("UPDATE users SET password_hash=? WHERE id=?",
+                       (generate_password_hash(new), session["user_id"]))
+            db.commit()
+            flash("Mot de passe modifié.", "success")
+            return redirect(url_for("dashboard"))
+    return render_template("change_password.html")
+
+if __name__ == "__main__":
+    init_db()
+    app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
