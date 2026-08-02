@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Comptes{% endblock %}
+{% block content %}
+<h1>Comptes et accès</h1>
+
+<section class="panel">
+<h2>Ajouter un compte</h2>
+<form method="post" class="form-grid">
+<input name="username" placeholder="Identifiant" required>
+<input type="password" name="password" placeholder="Mot de passe (8 caractères minimum)" required>
+<select name="role">
+  <option>Direction</option>
+  <option>Employé</option>
+  <option>Barman</option>
+  <option>Sécurité</option>
+  <option>DJ</option>
+</select>
+<button>Créer le compte</button>
+</form>
+</section>
+
+<section class="panel">
+<table>
+<tr><th>Identifiant</th><th>Rôle</th><th></th></tr>
+{% for r in rows %}
+<tr>
+<td>{{ r.username }}</td>
+<td>{{ r.role }}</td>
+<td>
+<form method="post" action="{{ url_for('delete_user', item_id=r.id) }}">
+<button class="danger-btn">Supprimer</button>
+</form>
+</td>
+</tr>
+{% endfor %}
+</table>
+</section>
+{% endblock %}

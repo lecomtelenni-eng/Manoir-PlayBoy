@@ -1,25 +1,67 @@
-{% extends "base.html" %}
-{% block title %}Événements{% endblock %}
-{% block content %}
-<h1>Événements</h1>
-<section class="panel">
-<form method="post" class="form-grid">
-<input name="name" placeholder="Nom de l'événement" required>
-<input type="date" name="event_date" required>
-<input type="number" step="0.01" name="entry_price" placeholder="Prix d'entrée" required>
-<input type="number" name="participants" placeholder="Participants" required>
-<input type="number" step="0.01" name="expenses" placeholder="Dépenses prévues" required>
-<select name="status"><option>Prévu</option><option>En cours</option><option>Terminé</option><option>Annulé</option></select>
-<button>Ajouter</button>
-</form>
-</section>
-<section class="panel">
-<table>
-<tr><th>Date</th><th>Nom</th><th>Entrée</th><th>Participants</th><th>Dépenses</th><th>Bénéfice estimé</th><th>Statut</th><th></th></tr>
-{% for r in rows %}
-<tr><td>{{ r.event_date }}</td><td>{{ r.name }}</td><td>{{ "%.0f"|format(r.entry_price) }} $</td><td>{{ r.participants }}</td><td>{{ "%.0f"|format(r.expenses) }} $</td><td>{{ "%.0f"|format(r.estimated_profit) }} $</td><td>{{ r.status }}</td>
-<td><form method="post" action="{{ url_for('delete_event', item_id=r.id) }}"><button class="danger-btn">Supprimer</button></form></td></tr>
-{% endfor %}
-</table>
-</section>
-{% endblock %}
+@echo off
+setlocal
+title Playboy Manor Manager
+cd /d "%~dp0"
+
+echo ============================================
+echo       PLAYBOY MANOR MANAGER
+echo ============================================
+echo.
+
+set "PYTHON_CMD="
+
+where py >nul 2>nul
+if %errorlevel%==0 set "PYTHON_CMD=py"
+
+if not defined PYTHON_CMD (
+    where python >nul 2>nul
+    if %errorlevel%==0 set "PYTHON_CMD=python"
+)
+
+if not defined PYTHON_CMD (
+    echo [ERREUR] Python n'est pas installe ou n'est pas ajoute au PATH.
+    echo.
+    echo Installe Python depuis python.org
+    echo Pendant l'installation, coche obligatoirement :
+    echo "Add Python to PATH"
+    echo.
+    pause
+    exit /b 1
+)
+
+echo Python detecte : %PYTHON_CMD%
+echo Installation / verification de Flask...
+%PYTHON_CMD% -m pip install --user -r requirements.txt
+
+if errorlevel 1 (
+    echo.
+    echo [ERREUR] L'installation des dependances a echoue.
+    echo Verifie ta connexion internet puis relance ce fichier.
+    pause
+    exit /b 1
+)
+
+echo.
+echo Demarrage du serveur...
+start "Playboy Manor Server" /min cmd /c "%PYTHON_CMD% app.py > serveur.log 2>&1"
+
+echo Attente du demarrage...
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+"$ok=$false; for($i=0;$i -lt 30;$i++){ try { $r=Invoke-WebRequest -UseBasicParsing http://127.0.0.1:5000/login -TimeoutSec 1; $ok=$true; break } catch {}; Start-Sleep -Seconds 1 }; if($ok){ exit 0 } else { exit 1 }"
+
+if errorlevel 1 (
+    echo.
+    echo [ERREUR] Le serveur n'a pas demarre.
+    echo Le fichier serveur.log contient le detail de l'erreur.
+    echo.
+    type serveur.log
+    pause
+    exit /b 1
+)
+
+echo Site pret.
+start "" "http://127.0.0.1:5000/login"
+echo.
+echo Tu peux fermer cette fenetre.
+timeout /t 3 >nul
+exit

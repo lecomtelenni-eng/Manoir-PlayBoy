@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Personnel{% endblock %}
+{% block content %}
+<h1>Personnel</h1>
+<section class="panel">
+<form method="post" class="form-grid">
+<input name="name" placeholder="Nom" required>
+<input name="role" placeholder="Poste" required>
+<input type="number" step="0.01" name="salary" placeholder="Salaire par soirée" required>
+<select name="status"><option>Actif</option><option>Absent</option><option>Inactif</option></select>
+<button>Ajouter</button>
+</form>
+</section>
+<section class="panel">
+<table>
+<tr><th>Nom</th><th>Poste</th><th>Salaire</th><th>Statut</th><th></th></tr>
+{% for r in rows %}
+<tr><td>{{ r.name }}</td><td>{{ r.role }}</td><td>{{ "%.0f"|format(r.salary) }} $</td><td>{{ r.status }}</td>
+<td><form method="post" action="{{ url_for('delete_staff', item_id=r.id) }}"><button class="danger-btn">Supprimer</button></form></td></tr>
+{% endfor %}
+</table>
+</section>
+{% endblock %}
