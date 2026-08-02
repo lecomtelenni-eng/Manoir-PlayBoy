@@ -1,47 +1,20 @@
-# Playboy Manor Manager
+# Playboy Manor Manager V2
 
-Petit site local de gestion pour le Manoir Playboy.
+Cette version utilise PostgreSQL sur Render. Les nouvelles données restent sauvegardées après les redémarrages et les redéploiements.
 
-## Comptes Direction par défaut
-- Identifiant : `SCOTT`
-- Identifiant : `MARCUS`
-- Identifiant : `KEAVON`
-- Mot de passe commun : `Manoir2026!`
+## Comptes Direction
+- SCOTT
+- MARCUS
+- KEAVON
 
-Les trois comptes ont le rôle `Direction`.
-Une page `Comptes` permet à la Direction de créer d'autres accès.
+Mot de passe temporaire commun : `Manoir2026!`
 
-## Installation sous Windows
+## Installation sur GitHub et Render
+1. Décompresse le ZIP.
+2. Sur GitHub, remplace les anciens fichiers par tout le contenu du dossier décompressé.
+3. Clique sur `Commit changes`.
+4. Dans Render, ouvre le Blueprint `Manoir PlayBoy`.
+5. Clique sur `Manual sync`.
+6. Render créera automatiquement `playboy-manor-db` et reliera le site avec `DATABASE_URL`.
 
-1. Installe Python 3.11 ou plus récent.
-2. Ouvre le dossier du site.
-3. Double-clique sur `LANCER_LE_SITE.bat`.
-4. Ouvre ton navigateur sur : http://127.0.0.1:5000
-
-Au premier lancement, le site crée automatiquement la base de données `manoir.db`.
-
-## Fonctions incluses
-- Connexion par mot de passe
-- Tableau de bord
-- Recettes et dépenses
-- Événements avec bénéfice estimé
-- Personnel et salaires
-- Stocks, prix d'achat, prix de vente et marge
-- Alertes de stock
-- Changement de mot de passe
-- Données d'exemple déjà intégrées
-
-## Mise en ligne
-Pour un hébergement public, change obligatoirement la clé secrète Flask et utilise un hébergeur adapté.
-
-
-## En cas de page "Ce site est inaccessible"
-Le serveur doit rester lancé sur l'ordinateur.
-
-1. Décompresse entièrement le fichier ZIP.
-2. Ne lance pas le fichier directement depuis le ZIP.
-3. Double-clique sur `LANCER_LE_SITE.bat`.
-4. Attends le message `Site prêt`.
-5. Le navigateur s'ouvrira automatiquement.
-
-Si le lancement échoue, ouvre `serveur.log` et lis le message d'erreur.
+Les données de l'ancienne base SQLite ne sont pas transférées automatiquement.
