@@ -1,6 +1,4 @@
-# Playboy Manor Manager V2
-
-Cette version utilise PostgreSQL sur Render. Les nouvelles données restent sauvegardées après les redémarrages et les redéploiements.
+# Playboy Manor Manager V3 COMPLET
 
 ## Comptes Direction
 - SCOTT
@@ -9,12 +7,24 @@ Cette version utilise PostgreSQL sur Render. Les nouvelles données restent sauv
 
 Mot de passe temporaire commun : `Manoir2026!`
 
-## Installation sur GitHub et Render
-1. Décompresse le ZIP.
-2. Sur GitHub, remplace les anciens fichiers par tout le contenu du dossier décompressé.
-3. Clique sur `Commit changes`.
-4. Dans Render, ouvre le Blueprint `Manoir PlayBoy`.
-5. Clique sur `Manual sync`.
-6. Render créera automatiquement `playboy-manor-db` et reliera le site avec `DATABASE_URL`.
+## Nouveautés V3
+- Factures RP multi-produits
+- Menu automatique lié au stock
+- Retrait automatique du stock
+- Calcul automatique du coût, total et bénéfice
+- Restauration du stock lors de la suppression d'une facture
+- Planning du personnel
+- Statistiques et graphiques
+- Top produits et vendeurs
+- Exports CSV ouvrables avec Excel
+- Droits selon les rôles
+- Impression / PDF des factures
+- PostgreSQL persistant sur Render
 
-Les données de l'ancienne base SQLite ne sont pas transférées automatiquement.
+## Installation
+1. Décompresse le ZIP.
+2. Remplace les fichiers du dépôt GitHub par ceux-ci.
+3. Commit changes.
+4. Sur Render, Manual sync.
+
+Les tables existantes sont conservées. La V3 ajoute automatiquement la table du planning.
